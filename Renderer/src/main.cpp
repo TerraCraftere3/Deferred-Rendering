@@ -289,6 +289,10 @@ int main()
 {
     Core::Init();
 
+    LOG_INFO("Test info message");
+    LOG_WARN("Test warning message");
+    LOG_ERROR("Test error message");
+
     glfwInit();
     GLFWwindow *window = glfwCreateWindow(800, 600, "Renderer", nullptr, nullptr);
     if (!window)
@@ -297,6 +301,7 @@ int main()
         glfwTerminate();
         return -1;
     }
+    glfwMaximizeWindow(window);
     LOG_INFO("GLFW window created");
     glfwMakeContextCurrent(window);
     LOG_INFO("Context created");
@@ -306,6 +311,8 @@ int main()
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     ImGui::StyleColorsDark();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
@@ -340,6 +347,10 @@ int main()
         ImGui::Begin("Controls");
         ImGui::SliderFloat("Speed", &speed, 0.0f, 5.0f);
         ImGui::ColorEdit3("Color", color);
+        ImGui::End();
+
+        ImGui::Begin("Logs");
+        Log::DrawLogs();
         ImGui::End();
 
         ImGui::Render();
