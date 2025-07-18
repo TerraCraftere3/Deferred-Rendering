@@ -1,9 +1,10 @@
-// FROM 3D RENDERER https://github.com/TerraCraftere3/3D-Renderer/blob/main/Renderer/src/Core/Log.h
 #ifndef LOG_H
 #define LOG_H
 
+#include <imgui.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/base_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <mutex>
 #include <vector>
 #include <string>
@@ -21,6 +22,7 @@ protected:
         formatter_->format(msg, formatted);
         m_LogBuffer.emplace_back(msg.level, fmt::to_string(formatted));
     }
+
     void flush_() override {}
 
 private:
@@ -35,9 +37,13 @@ public:
         if (!s_ImguiSink)
             s_ImguiSink = std::make_shared<ImGuiSink>();
 
+        if (!s_ConsoleSink)
+            s_ConsoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+
         if (!s_Logger)
         {
-            s_Logger = std::make_shared<spdlog::logger>("Core", s_ImguiSink);
+            std::vector<spdlog::sink_ptr> sinks{s_ImguiSink, s_ConsoleSink};
+            s_Logger = std::make_shared<spdlog::logger>("Core", sinks.begin(), sinks.end());
             spdlog::register_logger(s_Logger);
             spdlog::set_default_logger(s_Logger);
             spdlog::set_level(spdlog::level::trace);
@@ -110,12 +116,17 @@ public:
 private:
     static std::shared_ptr<spdlog::logger> s_Logger;
     static std::shared_ptr<ImGuiSink> s_ImguiSink;
+    static std::shared_ptr<spdlog::sinks::stdout_color_sink_mt> s_ConsoleSink;
 };
 
+// Static definitions
 inline std::shared_ptr<spdlog::logger> Log::s_Logger = nullptr;
 inline std::shared_ptr<ImGuiSink> Log::s_ImguiSink = nullptr;
+inline std::shared_ptr<spdlog::sinks::stdout_color_sink_mt> Log::s_ConsoleSink = nullptr;
 
+// Logging macros
 #define LOG_TRACE(...) ::Log::GetLogger()->trace(__VA_ARGS__)
+#define LOG_DEBUG(...) ::Log::GetLogger()->debug(__VA_ARGS__)
 #define LOG_INFO(...) ::Log::GetLogger()->info(__VA_ARGS__)
 #define LOG_WARN(...) ::Log::GetLogger()->warn(__VA_ARGS__)
 #define LOG_ERROR(...) ::Log::GetLogger()->error(__VA_ARGS__)

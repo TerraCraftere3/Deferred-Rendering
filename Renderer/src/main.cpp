@@ -11,6 +11,8 @@
 #endif
 
 #include "Core/Core.h"
+#include "Objects/ShaderFactory.h"
+#include "Objects/VBO.h"
 
 const char *vertexShaderSource = R"(
 #version 330 core
@@ -264,34 +266,9 @@ float vertices[] = {
     0.0f,
 };
 
-unsigned int createShader(unsigned int type, const char *source)
-{
-    unsigned int shader = glCreateShader(type);
-    glShaderSource(shader, 1, &source, nullptr);
-    glCompileShader(shader);
-    return shader;
-}
-
-unsigned int createProgram(const char *vsSrc, const char *fsSrc)
-{
-    unsigned int vs = createShader(GL_VERTEX_SHADER, vsSrc);
-    unsigned int fs = createShader(GL_FRAGMENT_SHADER, fsSrc);
-    unsigned int program = glCreateProgram();
-    glAttachShader(program, vs);
-    glAttachShader(program, fs);
-    glLinkProgram(program);
-    glDeleteShader(vs);
-    glDeleteShader(fs);
-    return program;
-}
-
 int main()
 {
     Core::Init();
-
-    LOG_INFO("Test info message");
-    LOG_WARN("Test warning message");
-    LOG_ERROR("Test error message");
 
     glfwInit();
     GLFWwindow *window = glfwCreateWindow(800, 600, "Renderer", nullptr, nullptr);
@@ -319,18 +296,19 @@ int main()
 
     LOG_INFO("ImGui initialized");
 
-    unsigned int VAO, VBO;
+    std::unique_ptr<Shader> shader = ShaderFactory::FromMemory(vertexShaderSource, fragmentShaderSource);
+
+    unsigned int VAO;
     glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
     glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    auto vbo = std::make_unique<VBO>();
+    vbo->Load();
+    vbo->Bind();
+    vbo->SetData(vertices, sizeof(vertices), GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-
-    unsigned int shader = createProgram(vertexShaderSource, fragmentShaderSource);
 
     float angle = 0.0f;
     float speed = 1.0f;
@@ -368,14 +346,15 @@ int main()
         glm::mat4 proj = glm::perspective(glm::radians(45.0f), width / (float)height, 0.1f, 100.0f);
         glm::mat4 mvp = proj * view * model;
 
-        glUseProgram(shader);
-        glUniformMatrix4fv(glGetUniformLocation(shader, "uMVP"), 1, GL_FALSE, glm::value_ptr(mvp));
-        glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, color);
-
         glm::vec3 lightDir = glm::normalize(glm::vec3(0.5f, 1.0f, 0.3f));
-        glUniform3fv(glGetUniformLocation(shader, "uLightDir"), 1, glm::value_ptr(lightDir));
-        glUniformMatrix4fv(glGetUniformLocation(shader, "uModel"), 1, GL_FALSE, glm::value_ptr(model));
 
+        shader->Bind();
+        shader->SetUniformMat4("uMVP", mvp);
+        shader->SetUniformVec3("uColor", glm::vec3(color[0], color[1], color[2]));
+        shader->SetUniformMat4("uModel", model);
+        shader->SetUniformVec3("uLightDir", lightDir);
+
+        vbo->Bind();
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -387,8 +366,9 @@ int main()
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
     glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteProgram(shader);
+    vbo->Unload();
+    shader->Unload();
+    LOG_INFO("Renderer shutdown complete");
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
