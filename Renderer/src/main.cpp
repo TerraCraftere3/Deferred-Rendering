@@ -16,65 +16,32 @@
 #include "Objects/VAO.h"
 #include "Objects/VBO.h"
 
-const char* vertexShaderSource = R"(
-#version 330 core
-layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aNormal;
-
-uniform mat4 uMVP;
-uniform mat4 uModel;
-uniform vec3 uLightDir;
-
-out float brightness;
-
-void main() {
-    vec3 normal = mat3(transpose(inverse(uModel))) * aNormal;
-    brightness = max(dot(normalize(normal), normalize(-uLightDir)), 0.0);
-    gl_Position = uMVP * vec4(aPos, 1.0);
-})";
-
-const char* fragmentShaderSource = R"(
-#version 330 core
-in float brightness;
-out vec4 FragColor;
-uniform vec3 uColor;
-void main() {
-    vec3 shaded = uColor * (0.2 + 0.8 * brightness);
-    FragColor = vec4(shaded, 1.0);
-})";
-
 float vertices[] = {
-    // positions        // normals
-    -0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f, 0.5f,  -0.5f, -0.5f,
-    0.0f,  0.0f,  -1.0f, 0.5f,  0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f,
-    0.5f,  0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f, -0.5f, 0.5f,  -0.5f,
-    0.0f,  0.0f,  -1.0f, -0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f,
-
-    -0.5f, -0.5f, 0.5f,  0.0f,  0.0f,  1.0f,  0.5f,  -0.5f, 0.5f,
-    0.0f,  0.0f,  1.0f,  0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-    0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  -0.5f, 0.5f,  0.5f,
-    0.0f,  0.0f,  1.0f,  -0.5f, -0.5f, 0.5f,  0.0f,  0.0f,  1.0f,
-
-    -0.5f, 0.5f,  0.5f,  -1.0f, 0.0f,  0.0f,  -0.5f, 0.5f,  -0.5f,
-    -1.0f, 0.0f,  0.0f,  -0.5f, -0.5f, -0.5f, -1.0f, 0.0f,  0.0f,
-    -0.5f, -0.5f, -0.5f, -1.0f, 0.0f,  0.0f,  -0.5f, -0.5f, 0.5f,
-    -1.0f, 0.0f,  0.0f,  -0.5f, 0.5f,  0.5f,  -1.0f, 0.0f,  0.0f,
-
-    0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,  0.5f,  0.5f,  -0.5f,
-    1.0f,  0.0f,  0.0f,  0.5f,  -0.5f, -0.5f, 1.0f,  0.0f,  0.0f,
-    0.5f,  -0.5f, -0.5f, 1.0f,  0.0f,  0.0f,  0.5f,  -0.5f, 0.5f,
-    1.0f,  0.0f,  0.0f,  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-
-    -0.5f, -0.5f, -0.5f, 0.0f,  -1.0f, 0.0f,  0.5f,  -0.5f, -0.5f,
-    0.0f,  -1.0f, 0.0f,  0.5f,  -0.5f, 0.5f,  0.0f,  -1.0f, 0.0f,
-    0.5f,  -0.5f, 0.5f,  0.0f,  -1.0f, 0.0f,  -0.5f, -0.5f, 0.5f,
-    0.0f,  -1.0f, 0.0f,  -0.5f, -0.5f, -0.5f, 0.0f,  -1.0f, 0.0f,
-
-    -0.5f, 0.5f,  -0.5f, 0.0f,  1.0f,  0.0f,  0.5f,  0.5f,  -0.5f,
-    0.0f,  1.0f,  0.0f,  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-    0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  -0.5f, 0.5f,  0.5f,
-    0.0f,  1.0f,  0.0f,  -0.5f, 0.5f,  -0.5f, 0.0f,  1.0f,  0.0f,
+    -0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f, 0.5f,  -0.5f, -0.5f, 0.0f,  0.0f,
+    -1.0f, 0.5f,  0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f, 0.5f,  0.5f,  -0.5f, 0.0f,
+    0.0f,  -1.0f, -0.5f, 0.5f,  -0.5f, 0.0f,  0.0f,  -1.0f, -0.5f, -0.5f, -0.5f,
+    0.0f,  0.0f,  -1.0f, -0.5f, -0.5f, 0.5f,  0.0f,  0.0f,  1.0f,  0.5f,  -0.5f,
+    0.5f,  0.0f,  0.0f,  1.0f,  0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  0.5f,
+    0.5f,  0.5f,  0.0f,  0.0f,  1.0f,  -0.5f, 0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+    -0.5f, -0.5f, 0.5f,  0.0f,  0.0f,  1.0f,  -0.5f, 0.5f,  0.5f,  -1.0f, 0.0f,
+    0.0f,  -0.5f, 0.5f,  -0.5f, -1.0f, 0.0f,  0.0f,  -0.5f, -0.5f, -0.5f, -1.0f,
+    0.0f,  0.0f,  -0.5f, -0.5f, -0.5f, -1.0f, 0.0f,  0.0f,  -0.5f, -0.5f, 0.5f,
+    -1.0f, 0.0f,  0.0f,  -0.5f, 0.5f,  0.5f,  -1.0f, 0.0f,  0.0f,  0.5f,  0.5f,
+    0.5f,  1.0f,  0.0f,  0.0f,  0.5f,  0.5f,  -0.5f, 1.0f,  0.0f,  0.0f,  0.5f,
+    -0.5f, -0.5f, 1.0f,  0.0f,  0.0f,  0.5f,  -0.5f, -0.5f, 1.0f,  0.0f,  0.0f,
+    0.5f,  -0.5f, 0.5f,  1.0f,  0.0f,  0.0f,  0.5f,  0.5f,  0.5f,  1.0f,  0.0f,
+    0.0f,  -0.5f, -0.5f, -0.5f, 0.0f,  -1.0f, 0.0f,  0.5f,  -0.5f, -0.5f, 0.0f,
+    -1.0f, 0.0f,  0.5f,  -0.5f, 0.5f,  0.0f,  -1.0f, 0.0f,  0.5f,  -0.5f, 0.5f,
+    0.0f,  -1.0f, 0.0f,  -0.5f, -0.5f, 0.5f,  0.0f,  -1.0f, 0.0f,  -0.5f, -0.5f,
+    -0.5f, 0.0f,  -1.0f, 0.0f,  -0.5f, 0.5f,  -0.5f, 0.0f,  1.0f,  0.0f,  0.5f,
+    0.5f,  -0.5f, 0.0f,  1.0f,  0.0f,  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+    0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,  -0.5f, 0.5f,  0.5f,  0.0f,  1.0f,
+    0.0f,  -0.5f, 0.5f,  -0.5f, 0.0f,  1.0f,  0.0f,
 };
+
+float quadVertices[] = {-1.0f, 1.0f,  0.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f,
+                        1.0f,  -1.0f, 1.0f, 0.0f, -1.0f, 1.0f,  0.0f, 1.0f,
+                        1.0f,  -1.0f, 1.0f, 0.0f, 1.0f,  1.0f,  1.0f, 1.0f};
 
 int main()
 {
@@ -108,7 +75,11 @@ int main()
 	LOG_INFO("ImGui initialized");
 
 	std::unique_ptr<Shader> shader =
-	    ShaderFactory::FromMemory(vertexShaderSource, fragmentShaderSource);
+	    ShaderFactory::FromFiles("shader/gbuffer.vert", "shader/gbuffer.frag");
+
+	glBindFragDataLocation(shader->GetID(), 0, "gPositionOut");
+	glBindFragDataLocation(shader->GetID(), 1, "gNormalOut");
+	glBindFragDataLocation(shader->GetID(), 2, "gAlbedoSpecOut");
 
 	auto vao = std::make_unique<VAO>();
 	vao->Load();
@@ -127,9 +98,75 @@ int main()
 	vao->Unbind();
 	vbo->Unbind();
 
+	auto compositeShader = ShaderFactory::FromFiles("shader/composite.vert",
+	                                                "shader/composite.frag");
+
+	auto quadVAO = std::make_unique<VAO>();
+	auto quadVBO = std::make_unique<VBO>();
+	quadVAO->Load();
+	quadVBO->Load();
+	quadVAO->Bind();
+	quadVBO->Bind();
+	quadVBO->SetData(quadVertices, sizeof(quadVertices));
+	quadVAO->EnableAttribute(0);
+	quadVAO->SetAttributePointer<float>(0, 2, 4 * sizeof(float), 0);
+	quadVAO->EnableAttribute(1);
+	quadVAO->SetAttributePointer<float>(1, 2, 4 * sizeof(float),
+	                                    2 * sizeof(float));
+	quadVAO->Unbind();
+	quadVBO->Unbind();
+
+	int SCR_WIDTH, SCR_HEIGHT;
+	glfwGetFramebufferSize(window, &SCR_WIDTH, &SCR_HEIGHT);
+
+	unsigned int gBuffer;
+	glGenFramebuffers(1, &gBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+	unsigned int gPosition, gNormal, gAlbedoSpec;
+
+	glGenTextures(1, &gPosition);
+	glBindTexture(GL_TEXTURE_2D, gPosition);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0,
+	             GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+	                       gPosition, 0);
+
+	glGenTextures(1, &gNormal);
+	glBindTexture(GL_TEXTURE_2D, gNormal);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0,
+	             GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D,
+	                       gNormal, 0);
+
+	glGenTextures(1, &gAlbedoSpec);
+	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA,
+	             GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D,
+	                       gAlbedoSpec, 0);
+
+	unsigned int rboDepth;
+	glGenRenderbuffers(1, &rboDepth);
+	glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, SCR_WIDTH,
+	                      SCR_HEIGHT);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+	                          GL_RENDERBUFFER, rboDepth);
+
+	unsigned int attachments[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1,
+	                               GL_COLOR_ATTACHMENT2};
+	glDrawBuffers(3, attachments);
+
 	float angle = 0.0f;
 	float speed = 1.0f;
 	float color[3] = {1.0f, 0.5f, 0.2f};
+	int displayMode = 1;
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -142,6 +179,8 @@ int main()
 		ImGui::Begin("Controls");
 		ImGui::SliderFloat("Speed", &speed, 0.0f, 5.0f);
 		ImGui::ColorEdit3("Color", color);
+		ImGui::SliderInt("Display Mode", &displayMode, 1, 4);
+		ImGui::Text("1: Final\n2: Position\n3: Normal\n4: Albedo");
 		ImGui::End();
 
 		ImGui::Begin("Logs");
@@ -173,11 +212,56 @@ int main()
 		shader->SetUniformVec3("uColor",
 		                       glm::vec3(color[0], color[1], color[2]));
 		shader->SetUniformMat4("uModel", model);
-		shader->SetUniformVec3("uLightDir", lightDir);
 
 		vbo->Bind();
 		vao->Bind();
+		glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer);
+
+		if (displayMode >= 2 && displayMode <= 4)
+		{
+			switch (displayMode)
+			{
+			case 2:
+				glReadBuffer(GL_COLOR_ATTACHMENT0); // position
+				break;
+			case 3:
+				glReadBuffer(GL_COLOR_ATTACHMENT1); // normal
+				break;
+			case 4:
+				glReadBuffer(GL_COLOR_ATTACHMENT2); // albedo
+				break;
+			}
+			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+			glBlitFramebuffer(0, 0, width, height, 0, 0, width, height,
+			                  GL_COLOR_BUFFER_BIT, GL_NEAREST);
+		}
+		else if (displayMode == 1)
+		{
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			compositeShader->Bind();
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, gPosition);
+			compositeShader->SetUniformInt("gPosition", 0);
+
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, gNormal);
+			compositeShader->SetUniformInt("gNormal", 1);
+
+			glActiveTexture(GL_TEXTURE2);
+			glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
+			compositeShader->SetUniformInt("gAlbedoSpec", 2);
+
+			quadVAO->Bind();
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			quadVAO->Unbind();
+		}
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		glfwSwapBuffers(window);
@@ -187,8 +271,11 @@ int main()
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
 	vao->Unload();
+	quadVAO->Unload();
 	vbo->Unload();
+	quadVBO->Unload();
 	shader->Unload();
+	compositeShader->Unload();
 	LOG_INFO("Renderer shutdown complete");
 	glfwDestroyWindow(window);
 	glfwTerminate();

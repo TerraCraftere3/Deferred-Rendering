@@ -49,7 +49,12 @@ void Shader::Load()
 	// ==== Reset ====
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
-	Unload(); // Delete previous
+	if (m_ID != 0)
+	{
+		LOG_WARN("Shader already loaded, unloading previous shader!!! (NOT "
+		         "RECOMMENDED)");
+		Unload();
+	}
 
 	m_ID = program;
 	LOG_DEBUG("Shader created with ID {}", m_ID);
