@@ -10,7 +10,6 @@ class GPUObject
 public:
     GPUObject() : m_ID(0)
     {
-        LOG_INFO("Created GPUObject of type: {}", GetClassName());
     }
 
     GPUObject(const GPUObject &other)

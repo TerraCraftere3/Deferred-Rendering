@@ -13,3 +13,5 @@ CMakeUserPresets.json
 build
 runtime/*.exe
 runtime/*.pdb
+*.vcxproj
+*.vcxproj.filters

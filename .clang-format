@@ -1,0 +1,10 @@
+BasedOnStyle: LLVM
+UseTab: ForIndentation
+IndentWidth: 4
+TabWidth: 4
+BreakBeforeBraces: Allman
+PointerAlignment: Left 
+AllowShortIfStatementsOnASingleLine: false
+ReflowComments: true
+SortIncludes: false
+IncludeBlocks: Preserve

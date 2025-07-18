@@ -80,5 +80,12 @@
         "random": "cpp",
         "regex": "cpp",
         "variant": "cpp"
-    }
+    },
+    "clangd.arguments": [
+        "--compile-commands-dir=./build"
+    ],
+    "cmake.configureSettings": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+    },
+    "cmake.buildDirectory": "${workspaceFolder}/build"
 }
