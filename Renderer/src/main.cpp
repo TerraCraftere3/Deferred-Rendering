@@ -15,6 +15,7 @@
 #include "Objects/ShaderFactory.h"
 #include "Objects/VAO.h"
 #include "Objects/VBO.h"
+#include "Objects/Framebuffer.h"
 
 float vertices[] = {
     -0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f, 0.5f,  -0.5f, -0.5f, 0.0f,  0.0f,
@@ -74,18 +75,18 @@ int main()
 
 	LOG_INFO("ImGui initialized");
 
-	std::unique_ptr<Shader> shader =
+	gpu_ptr<Shader> shader =
 	    ShaderFactory::FromFiles("shader/gbuffer.vert", "shader/gbuffer.frag");
 
 	glBindFragDataLocation(shader->GetID(), 0, "gPositionOut");
 	glBindFragDataLocation(shader->GetID(), 1, "gNormalOut");
 	glBindFragDataLocation(shader->GetID(), 2, "gAlbedoSpecOut");
 
-	auto vao = std::make_unique<VAO>();
+	gpu_ptr<VAO> vao = make_gpu_ptr<VAO>();
 	vao->Load();
 	vao->Bind();
 
-	auto vbo = std::make_unique<VBO>();
+	gpu_ptr<VBO> vbo = make_gpu_ptr<VBO>();
 	vbo->Load();
 	vbo->Bind();
 	vbo->SetData(vertices, sizeof(vertices));
@@ -98,11 +99,11 @@ int main()
 	vao->Unbind();
 	vbo->Unbind();
 
-	auto compositeShader = ShaderFactory::FromFiles("shader/composite.vert",
-	                                                "shader/composite.frag");
+	gpu_ptr<Shader> compositeShader = ShaderFactory::FromFiles(
+	    "shader/composite.vert", "shader/composite.frag");
 
-	auto quadVAO = std::make_unique<VAO>();
-	auto quadVBO = std::make_unique<VBO>();
+	gpu_ptr<VAO> quadVAO = make_gpu_ptr<VAO>();
+	gpu_ptr<VBO> quadVBO = make_gpu_ptr<VBO>();
 	quadVAO->Load();
 	quadVBO->Load();
 	quadVAO->Bind();
@@ -119,15 +120,15 @@ int main()
 	int SCR_WIDTH, SCR_HEIGHT;
 	glfwGetFramebufferSize(window, &SCR_WIDTH, &SCR_HEIGHT);
 
-	unsigned int gBuffer;
-	glGenFramebuffers(1, &gBuffer);
-	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+	auto gBuffer = make_gpu_ptr<Framebuffer>();
+	gBuffer->Load();
+	gBuffer->Bind();
 	unsigned int gPosition, gNormal, gAlbedoSpec;
 
 	glGenTextures(1, &gPosition);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0,
-	             GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA,
+	             GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
@@ -135,8 +136,8 @@ int main()
 
 	glGenTextures(1, &gNormal);
 	glBindTexture(GL_TEXTURE_2D, gNormal);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCR_WIDTH, SCR_HEIGHT, 0,
-	             GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA,
+	             GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D,
@@ -215,12 +216,12 @@ int main()
 
 		vbo->Bind();
 		vao->Bind();
-		glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+		gBuffer->Bind();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		gBuffer->Unbind();
 
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer);
+		gBuffer->Bind(Framebuffer::READ_FRAMEBUFFER);
 
 		if (displayMode >= 2 && displayMode <= 4)
 		{
@@ -261,7 +262,7 @@ int main()
 			quadVAO->Unbind();
 		}
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		gBuffer->Unbind(Framebuffer::DEFAULT);
 
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		glfwSwapBuffers(window);

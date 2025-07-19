@@ -65,6 +65,7 @@ void Shader::Unload()
 	if (m_ID != 0)
 	{
 		glDeleteProgram(m_ID);
+		LOG_DEBUG("Shader with ID {} deleted", m_ID);
 		m_ID = 0;
 	}
 }

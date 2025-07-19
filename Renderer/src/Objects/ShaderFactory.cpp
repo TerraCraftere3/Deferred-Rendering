@@ -1,8 +1,7 @@
 #include "ShaderFactory.h"
 
-std::unique_ptr<Shader>
-ShaderFactory::FromFiles(const std::string& vertexPath,
-                         const std::string& fragmentPath)
+gpu_ptr<Shader> ShaderFactory::FromFiles(const std::string& vertexPath,
+                                         const std::string& fragmentPath)
 {
 	std::string vertexCode, fragmentCode;
 	if (!ReadFile(vertexPath, vertexCode))
@@ -16,17 +15,16 @@ ShaderFactory::FromFiles(const std::string& vertexPath,
 		return nullptr;
 	}
 
-	auto shader = std::make_unique<Shader>();
+	auto shader = make_gpu_ptr<Shader>();
 	shader->SetSources(vertexCode, fragmentCode);
 	shader->Load();
 	return shader;
 }
 
-std::unique_ptr<Shader>
-ShaderFactory::FromMemory(const std::string& vertexSrc,
-                          const std::string& fragmentSrc)
+gpu_ptr<Shader> ShaderFactory::FromMemory(const std::string& vertexSrc,
+                                          const std::string& fragmentSrc)
 {
-	auto shader = std::make_unique<Shader>();
+	auto shader = make_gpu_ptr<Shader>();
 	shader->SetSources(vertexSrc, fragmentSrc);
 	shader->Load();
 	return shader;

@@ -8,10 +8,12 @@
 
 class ShaderFactory
 {
-public:
-    static std::unique_ptr<Shader> FromFiles(const std::string &vertexPath, const std::string &fragmentPath);
-    static std::unique_ptr<Shader> FromMemory(const std::string &vertexSrc, const std::string &fragmentSrc);
+  public:
+	static gpu_ptr<Shader> FromFiles(const std::string& vertexPath,
+	                                 const std::string& fragmentPath);
+	static gpu_ptr<Shader> FromMemory(const std::string& vertexSrc,
+	                                  const std::string& fragmentSrc);
 
-private:
-    static bool ReadFile(const std::string &path, std::string &outContent);
+  private:
+	static bool ReadFile(const std::string& path, std::string& outContent);
 };

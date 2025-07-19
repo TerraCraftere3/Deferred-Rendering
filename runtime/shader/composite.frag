@@ -9,10 +9,20 @@ uniform sampler2D gAlbedoSpec;
 
 void main()
 {
-    vec3 position = texture(gPosition, TexCoords).rgb;
-    vec3 normal = texture(gNormal, TexCoords).rgb;
-    vec3 albedo = texture(gAlbedoSpec, TexCoords).rgb;
+    vec3 FragPos = texture(gPosition, TexCoords).rgb;
+    vec3 Normal   = normalize(texture(gNormal, TexCoords).rgb);
+    vec3 Albedo   = texture(gAlbedoSpec, TexCoords).rgb;
+    float Specular = texture(gAlbedoSpec, TexCoords).a;
 
-    // Simple visualization: mix components
-    FragColor = vec4(albedo, 1.0);
+    vec3 lightDir = normalize(vec3(-0.5, -1.0, 0.3));
+    vec3 lightColor = vec3(1.0);
+
+    float diff = max(dot(Normal, lightDir), 0.0);
+    vec3 diffuse = diff * lightColor;
+
+    vec3 ambient = vec3(0.1);
+
+    vec3 lighting = (ambient + diffuse) * Albedo;
+
+    FragColor = vec4(lighting, 1.0);
 }
