@@ -17,4 +17,5 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
 # Add subdirectories
 add_subdirectory(Vendor)
-add_subdirectory(Renderer)
+add_subdirectory(Library)
+add_subdirectory(Examples)

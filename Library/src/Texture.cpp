@@ -1,4 +1,4 @@
-#include "Texture.h"
+#include "OpenGL/Texture.h"
 
 void Texture::Load()
 {

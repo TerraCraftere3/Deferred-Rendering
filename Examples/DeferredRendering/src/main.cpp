@@ -12,13 +12,13 @@
 #include <windows.h>
 #endif
 
-#include "Core/Core.h"
-#include "Objects/ShaderFactory.h"
-#include "Objects/VAO.h"
-#include "Objects/VBO.h"
-#include "Objects/Framebuffer.h"
-#include "Objects/Texture.h"
-#include "Objects/Renderbuffer.h"
+#include "OpenGL/ShaderFactory.h"
+#include "OpenGL/VAO.h"
+#include "OpenGL/VBO.h"
+#include "OpenGL/Framebuffer.h"
+#include "OpenGL/Texture.h"
+#include "OpenGL/Renderbuffer.h"
+#include "OpenGL/Log.h"
 
 float vertices[] = {
     -0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f, 0.5f,  -0.5f, -0.5f, 0.0f,  0.0f,
@@ -109,7 +109,7 @@ int main()
 		    glm::normalize(baseAxes[i % baseAxes.size()]));
 	}
 
-	Core::Init();
+	Log::Init();
 
 	glfwInit();
 	GLFWwindow* window =
@@ -224,7 +224,6 @@ int main()
 
 	float angle = 0.0f;
 	float speed = 1.0f;
-	float color[3] = {1.0f, 0.5f, 0.2f};
 	int displayMode = 1;
 
 	std::vector<glm::vec3> cubeColors;
@@ -246,13 +245,14 @@ int main()
 
 		ImGui::Begin("Controls");
 		ImGui::SliderFloat("Speed", &speed, 0.0f, 5.0f);
-		ImGui::ColorEdit3("Color", color);
 		ImGui::SliderInt("Display Mode", &displayMode, 1, 4);
 		ImGui::Text("1: Final\n2: Position\n3: Normal\n4: Albedo");
 		ImGui::End();
 
 		ImGui::Begin("Logs");
+#ifdef GLIB_USE_IMGUI
 		Log::DrawLogs();
+#endif
 		ImGui::End();
 
 		ImGui::Render();

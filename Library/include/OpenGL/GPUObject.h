@@ -3,7 +3,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include "Core/Log.h"
+#include "OpenGL/Log.h"
 
 #define gpu_ptr std::shared_ptr
 #define make_gpu_ptr std::make_shared

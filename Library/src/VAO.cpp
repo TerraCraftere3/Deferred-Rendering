@@ -1,5 +1,4 @@
-#include "VAO.h"
-#include "Core/Log.h"
+#include "OpenGL/VAO.h"
 
 void VAO::Load()
 {

@@ -1,5 +1,4 @@
-#include "Shader.h"
-#include "VBO.h"
+#include "OpenGL/Shader.h"
 
 void Shader::SetSources(const std::string& vertexSrc,
                         const std::string& fragmentSrc)

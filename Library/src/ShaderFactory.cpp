@@ -1,4 +1,4 @@
-#include "ShaderFactory.h"
+#include "OpenGL/ShaderFactory.h"
 
 gpu_ptr<Shader> ShaderFactory::FromFiles(const std::string& vertexPath,
                                          const std::string& fragmentPath)

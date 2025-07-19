@@ -1,4 +1,4 @@
-#include "VBO.h"
+#include "OpenGL/VBO.h"
 
 void VBO::Load()
 {
