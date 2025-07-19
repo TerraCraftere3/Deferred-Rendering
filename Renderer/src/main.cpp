@@ -6,6 +6,7 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include <random>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -46,8 +47,68 @@ float quadVertices[] = {-1.0f, 1.0f,  0.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f,
                         1.0f,  -1.0f, 1.0f, 0.0f, -1.0f, 1.0f,  0.0f, 1.0f,
                         1.0f,  -1.0f, 1.0f, 0.0f, 1.0f,  1.0f,  1.0f, 1.0f};
 
+void DrawCube(const gpu_ptr<VAO>& vao, const gpu_ptr<VBO>& vbo,
+              const gpu_ptr<Shader>& shader, const glm::mat4& mvp,
+              const glm::vec3& color, const glm::mat4& model)
+{
+	shader->Bind();
+	shader->SetUniformMat4("uMVP", mvp);
+	shader->SetUniformVec3("uColor", color);
+	shader->SetUniformMat4("uModel", model);
+	vao->Bind();
+	vbo->Bind();
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	vao->Unbind();
+	vbo->Unbind();
+	shader->Unbind();
+}
+
+std::vector<glm::vec3> cubePositions = {
+    {-2.0f, -2.0f, -2.0f},
+    {-2.0f, -2.0f, 0.0f},
+    {-2.0f, -2.0f, 2.0f},
+    {-2.0f, 0.0f, -2.0f},
+    {-2.0f, 0.0f, 0.0f},
+    {-2.0f, 0.0f, 2.0f},
+    {-2.0f, 2.0f, -2.0f},
+    {-2.0f, 2.0f, 0.0f},
+    {-2.0f, 2.0f, 2.0f},
+
+    {0.0f, -2.0f, -2.0f},
+    {0.0f, -2.0f, 0.0f},
+    {0.0f, -2.0f, 2.0f},
+    {0.0f, 0.0f, -2.0f},
+    /*center*/ {0.0f, 0.0f, 2.0f},
+    {0.0f, 2.0f, -2.0f},
+    {0.0f, 2.0f, 0.0f},
+    {0.0f, 2.0f, 2.0f},
+
+    {2.0f, -2.0f, -2.0f},
+    {2.0f, -2.0f, 0.0f},
+    {2.0f, -2.0f, 2.0f},
+    {2.0f, 0.0f, -2.0f},
+    {2.0f, 0.0f, 0.0f},
+    {2.0f, 0.0f, 2.0f},
+    {2.0f, 2.0f, -2.0f},
+    {2.0f, 2.0f, 0.0f},
+    {2.0f, 2.0f, 2.0f},
+};
+
+std::vector<glm::vec3> cubeRotationAxes;
+std::vector<glm::vec3> baseAxes = {
+    {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f},
+    {1.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 1.0f},
+    {1.0f, 1.0f, 1.0f},
+};
 int main()
 {
+
+	for (size_t i = 0; i < cubePositions.size(); ++i)
+	{
+		cubeRotationAxes.push_back(
+		    glm::normalize(baseAxes[i % baseAxes.size()]));
+	}
+
 	Core::Init();
 
 	glfwInit();
@@ -166,6 +227,15 @@ int main()
 	float color[3] = {1.0f, 0.5f, 0.2f};
 	int displayMode = 1;
 
+	std::vector<glm::vec3> cubeColors;
+	std::mt19937 rng(std::random_device{}());
+	std::uniform_real_distribution<float> dist(0.2f, 1.0f); // avoid dark/black
+
+	for (size_t i = 0; i < cubePositions.size(); ++i)
+	{
+		cubeColors.emplace_back(dist(rng), dist(rng), dist(rng));
+	}
+
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
@@ -195,27 +265,23 @@ int main()
 
 		angle += speed * 0.01f;
 
-		glm::mat4 model =
-		    glm::rotate(glm::mat4(1.0f), angle, glm::vec3(1.0f, 1.0f, 0.0f));
 		glm::mat4 view =
-		    glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f));
+		    glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -10.0f));
 		glm::mat4 proj = glm::perspective(glm::radians(45.0f),
 		                                  width / (float)height, 0.1f, 100.0f);
-		glm::mat4 mvp = proj * view * model;
-
-		glm::vec3 lightDir = glm::normalize(glm::vec3(0.5f, 1.0f, 0.3f));
 
 		shader->Bind();
-		shader->SetUniformMat4("uMVP", mvp);
-		shader->SetUniformVec3("uColor",
-		                       glm::vec3(color[0], color[1], color[2]));
-		shader->SetUniformMat4("uModel", model);
 
-		vbo->Bind();
-		vao->Bind();
 		gBuffer->Bind();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		for (size_t i = 0; i < cubePositions.size(); ++i)
+		{
+			glm::mat4 model = glm::translate(glm::mat4(1.0f), cubePositions[i]);
+			model = glm::rotate(model, angle + i, cubeRotationAxes[i]);
+			glm::mat4 mvp = proj * view * model;
+
+			DrawCube(vao, vbo, shader, mvp, cubeColors[i], model);
+		}
 		gBuffer->Unbind();
 
 		gBuffer->Bind(Framebuffer::READ_FRAMEBUFFER);
@@ -253,6 +319,18 @@ int main()
 			glActiveTexture(GL_TEXTURE2);
 			gAlbedoSpec->Bind();
 			compositeShader->SetUniformInt("gAlbedoSpec", 2);
+
+			float lightRadius = 10.0f;
+			float lightSpeed = 0.5f;
+			float time = static_cast<float>(glfwGetTime());
+			glm::vec3 lightPos =
+			    glm::vec3(cos(time * lightSpeed) * lightRadius, 0.0f,
+			              sin(time * lightSpeed) * lightRadius);
+
+			compositeShader->SetUniformVec3("uLightPos", lightPos);
+
+			compositeShader->SetUniformVec3("uViewPos",
+			                                glm::vec3(0.0f, 0.0f, 10.0f));
 
 			quadVAO->Bind();
 			glDrawArrays(GL_TRIANGLES, 0, 6);
