@@ -16,6 +16,8 @@
 #include "Objects/VAO.h"
 #include "Objects/VBO.h"
 #include "Objects/Framebuffer.h"
+#include "Objects/Texture.h"
+#include "Objects/Renderbuffer.h"
 
 float vertices[] = {
     -0.5f, -0.5f, -0.5f, 0.0f,  0.0f,  -1.0f, 0.5f,  -0.5f, -0.5f, 0.0f,  0.0f,
@@ -123,42 +125,37 @@ int main()
 	auto gBuffer = make_gpu_ptr<Framebuffer>();
 	gBuffer->Load();
 	gBuffer->Bind();
-	unsigned int gPosition, gNormal, gAlbedoSpec;
 
-	glGenTextures(1, &gPosition);
-	glBindTexture(GL_TEXTURE_2D, gPosition);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA,
-	             GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-	                       gPosition, 0);
+	auto gPosition = make_gpu_ptr<Texture>();
+	gPosition->Load();
+	gPosition->Bind();
+	gPosition->SetData(GL_RGBA, GL_FLOAT, nullptr, SCR_WIDTH, SCR_HEIGHT);
+	gPosition->SetParameter(Texture::MIN_FILTER, Texture::NEAREST);
+	gPosition->SetParameter(Texture::MAG_FILTER, Texture::NEAREST);
+	gBuffer->AttachTexture(gPosition, GL_COLOR_ATTACHMENT0);
 
-	glGenTextures(1, &gNormal);
-	glBindTexture(GL_TEXTURE_2D, gNormal);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA,
-	             GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D,
-	                       gNormal, 0);
+	auto gNormal = make_gpu_ptr<Texture>();
+	gNormal->Load();
+	gNormal->Bind();
+	gNormal->SetData(GL_RGBA, GL_FLOAT, NULL, SCR_WIDTH, SCR_HEIGHT);
+	gNormal->SetParameter(Texture::MIN_FILTER, Texture::NEAREST);
+	gNormal->SetParameter(Texture::MAG_FILTER, Texture::NEAREST);
+	gBuffer->AttachTexture(gNormal, GL_COLOR_ATTACHMENT1);
 
-	glGenTextures(1, &gAlbedoSpec);
-	glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGBA,
-	             GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D,
-	                       gAlbedoSpec, 0);
+	auto gAlbedoSpec = make_gpu_ptr<Texture>();
+	gAlbedoSpec->Load();
+	gAlbedoSpec->Bind();
+	gAlbedoSpec->SetData(GL_RGBA, GL_UNSIGNED_BYTE, nullptr, SCR_WIDTH,
+	                     SCR_HEIGHT);
+	gAlbedoSpec->SetParameter(Texture::MIN_FILTER, Texture::NEAREST);
+	gAlbedoSpec->SetParameter(Texture::MAG_FILTER, Texture::NEAREST);
+	gBuffer->AttachTexture(gAlbedoSpec, GL_COLOR_ATTACHMENT2);
 
-	unsigned int rboDepth;
-	glGenRenderbuffers(1, &rboDepth);
-	glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, SCR_WIDTH,
-	                      SCR_HEIGHT);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-	                          GL_RENDERBUFFER, rboDepth);
+	auto rboDepth = make_gpu_ptr<Renderbuffer>();
+	rboDepth->Load();
+	rboDepth->Bind();
+	rboDepth->SetData(GL_DEPTH_COMPONENT24, SCR_WIDTH, SCR_HEIGHT);
+	gBuffer->AttachRenderbuffer(rboDepth, GL_DEPTH_ATTACHMENT);
 
 	unsigned int attachments[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1,
 	                               GL_COLOR_ATTACHMENT2};
@@ -237,7 +234,7 @@ int main()
 				glReadBuffer(GL_COLOR_ATTACHMENT2); // albedo
 				break;
 			}
-			glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+			gBuffer->Unbind(Framebuffer::DRAW_FRAMEBUFFER);
 			glBlitFramebuffer(0, 0, width, height, 0, 0, width, height,
 			                  GL_COLOR_BUFFER_BIT, GL_NEAREST);
 		}
@@ -246,15 +243,15 @@ int main()
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			compositeShader->Bind();
 			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, gPosition);
+			gPosition->Bind();
 			compositeShader->SetUniformInt("gPosition", 0);
 
 			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, gNormal);
+			gNormal->Bind();
 			compositeShader->SetUniformInt("gNormal", 1);
 
 			glActiveTexture(GL_TEXTURE2);
-			glBindTexture(GL_TEXTURE_2D, gAlbedoSpec);
+			gAlbedoSpec->Bind();
 			compositeShader->SetUniformInt("gAlbedoSpec", 2);
 
 			quadVAO->Bind();
@@ -275,6 +272,10 @@ int main()
 	quadVAO->Unload();
 	vbo->Unload();
 	quadVBO->Unload();
+	gPosition->Unload();
+	gNormal->Unload();
+	gAlbedoSpec->Unload();
+	gBuffer->Unload();
 	shader->Unload();
 	compositeShader->Unload();
 	LOG_INFO("Renderer shutdown complete");
