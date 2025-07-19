@@ -1,1 +1,2 @@
 add_subdirectory(DeferredRendering)
+add_subdirectory(Triangle)
